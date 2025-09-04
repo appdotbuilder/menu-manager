@@ -1,9 +1,30 @@
+import { db } from '../db';
+import { qrCodesTable } from '../db/schema';
 import { type DeleteEntityInput } from '../schema';
+import { eq } from 'drizzle-orm';
 
 export const deleteQRCode = async (input: DeleteEntityInput): Promise<boolean> => {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is deleting a QR code from the database.
-    // Should also clean up the QR code image file from storage.
-    // Should return true if successfully deleted, false if QR code doesn't exist.
-    return false;
+  try {
+    // First check if the QR code exists
+    const existingQRCode = await db.select()
+      .from(qrCodesTable)
+      .where(eq(qrCodesTable.id, input.id))
+      .execute();
+
+    if (existingQRCode.length === 0) {
+      return false; // QR code doesn't exist
+    }
+
+    // Delete the QR code from the database
+    const deleteResult = await db.delete(qrCodesTable)
+      .where(eq(qrCodesTable.id, input.id))
+      .returning()
+      .execute();
+
+    // Return true if the deletion was successful
+    return deleteResult.length > 0;
+  } catch (error) {
+    console.error('QR code deletion failed:', error);
+    throw error;
+  }
 };

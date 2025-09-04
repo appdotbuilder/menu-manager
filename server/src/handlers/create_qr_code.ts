@@ -1,17 +1,29 @@
+import { db } from '../db';
+import { qrCodesTable } from '../db/schema';
 import { type CreateQRCodeInput, type QRCode } from '../schema';
 
 export const createQRCode = async (input: CreateQRCodeInput): Promise<QRCode> => {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is creating a new QR code persisting it in the database.
-    // Should generate the actual QR code image and store it (e.g., in cloud storage),
-    // then save the URL to qr_code_url field.
-    return Promise.resolve({
-        id: 0, // Placeholder ID
+  try {
+    // For this implementation, we'll generate a placeholder QR code URL
+    // In a real implementation, this would integrate with a QR code generation service
+    // and potentially upload the image to cloud storage
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(input.menu_url)}`;
+
+    // Insert QR code record
+    const result = await db.insert(qrCodesTable)
+      .values({
         name: input.name,
         menu_url: input.menu_url,
-        qr_code_url: 'https://placeholder.com/qr-code.png', // Placeholder QR code URL
-        is_active: input.is_active ?? true,
-        created_at: new Date(),
-        updated_at: new Date()
-    } as QRCode);
+        qr_code_url: qrCodeUrl,
+        is_active: input.is_active ?? true // Apply default if not provided
+      })
+      .returning()
+      .execute();
+
+    // Return the created QR code
+    return result[0];
+  } catch (error) {
+    console.error('QR code creation failed:', error);
+    throw error;
+  }
 };

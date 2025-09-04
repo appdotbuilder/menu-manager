@@ -1,8 +1,28 @@
+import { db } from '../db';
+import { menuThemesTable } from '../db/schema';
+import { eq } from 'drizzle-orm';
 import { type MenuTheme } from '../schema';
 
 export const getActiveMenuTheme = async (): Promise<MenuTheme | null> => {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is fetching the currently active menu theme from the database.
-    // Should return the theme where is_active = true, or null if no active theme exists.
-    return null;
+  try {
+    const result = await db.select()
+      .from(menuThemesTable)
+      .where(eq(menuThemesTable.is_active, true))
+      .limit(1)
+      .execute();
+
+    if (result.length === 0) {
+      return null;
+    }
+
+    // Convert numeric fields back to numbers before returning
+    const theme = result[0];
+    return {
+      ...theme,
+      // No numeric conversions needed for this schema - all fields are already proper types
+    };
+  } catch (error) {
+    console.error('Failed to fetch active menu theme:', error);
+    throw error;
+  }
 };

@@ -1,8 +1,18 @@
+import { db } from '../db';
+import { qrCodesTable } from '../db/schema';
+import { desc } from 'drizzle-orm';
 import { type QRCode } from '../schema';
 
 export const getQRCodes = async (): Promise<QRCode[]> => {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is fetching all QR codes from the database,
-    // ordered by created_at descending.
-    return [];
+  try {
+    const result = await db.select()
+      .from(qrCodesTable)
+      .orderBy(desc(qrCodesTable.created_at))
+      .execute();
+
+    return result;
+  } catch (error) {
+    console.error('Failed to fetch QR codes:', error);
+    throw error;
+  }
 };

@@ -1,11 +1,22 @@
+import { db } from '../db';
+import { menuThemesTable } from '../db/schema';
 import { type CreateMenuThemeInput, type MenuTheme } from '../schema';
+import { eq } from 'drizzle-orm';
 
 export const createMenuTheme = async (input: CreateMenuThemeInput): Promise<MenuTheme> => {
-    // This is a placeholder declaration! Real code should be implemented here.
-    // The goal of this handler is creating a new menu theme persisting it in the database.
-    // Should deactivate other themes if this one is set as active.
-    return Promise.resolve({
-        id: 0, // Placeholder ID
+  try {
+    // If this theme is set as active, deactivate all other themes first
+    const isActive = input.is_active ?? true;
+    if (isActive) {
+      await db.update(menuThemesTable)
+        .set({ is_active: false })
+        .where(eq(menuThemesTable.is_active, true))
+        .execute();
+    }
+
+    // Insert the new menu theme
+    const result = await db.insert(menuThemesTable)
+      .values({
         restaurant_name: input.restaurant_name,
         button_color: input.button_color,
         button_shape: input.button_shape,
@@ -14,8 +25,14 @@ export const createMenuTheme = async (input: CreateMenuThemeInput): Promise<Menu
         border_radius: input.border_radius,
         primary_color: input.primary_color,
         text_color: input.text_color,
-        is_active: input.is_active ?? true,
-        created_at: new Date(),
-        updated_at: new Date()
-    } as MenuTheme);
+        is_active: isActive
+      })
+      .returning()
+      .execute();
+
+    return result[0];
+  } catch (error) {
+    console.error('Menu theme creation failed:', error);
+    throw error;
+  }
 };
